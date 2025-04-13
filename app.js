@@ -8,10 +8,19 @@ const cors = require("cors");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get('/', (req, res)=>{
+  res.status(200).json({
+    data: {
+      name: 'ike',
+      age: '23'
+    }
+  })
+})
+
 
 app.use(
     cors({
-      origin: "http://localhost:8080", // Your React app's URL
+      origin: "http://localhost:5173", // Your React app's URL
       credentials: true, // Allow sending cookies with credentials
     })
   );

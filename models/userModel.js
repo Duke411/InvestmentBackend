@@ -37,6 +37,11 @@ const UserSchema = new mongoose.Schema({
             message: 'Passwords do not match'
         }
     },
+    accountBalance: {
+        type: Number,
+        default: 0.00,
+        min: [0, 'Account balance cannot be negative']
+    },
     role: {
         type: String,
         enum: ['user', 'admin'],
@@ -64,6 +69,10 @@ UserSchema.methods.correctPassword = async function(candidatePassword, userPassw
     return await bcrypt.compare(candidatePassword, userPassword);
 };
 
+// userSchema.methods.comparePassword = async function(candidatePassword, userPassword) {
+//     return await bcrypt.compare(candidatePassword, userPassword);
+//   };
+
 const User = mongoose.model('User', UserSchema);
 
-module.exports  = User;
+module.exports = User;
