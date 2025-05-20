@@ -12,7 +12,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: "https://tradeemma.netlify.app", // Your React app's URL
+    origin: ["https://tradeemma.netlify.app", "http://localhost:5173/"], // Your React app's URL
     credentials: true, // Allow sending cookies with credentials
   })
 );
