@@ -10,18 +10,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.get("/", (req, res) => {
-  res.status(200).json({
-    data: {
-      name: "ike",
-      age: "23",
-    },
-  });
-});
+// app.get("/", (req, res) => {
+//   res.status(200).json({
+//     data: {
+//       name: "ike",
+//       age: "23",
+//     },
+//   });
+// });
 
 app.use(
   cors({
-    origin: "https://tradeemma.netlify.app/", // Your React app's URL
+    origin: "https://tradeemma.netlify.app", // Your React app's URL
     credentials: true, // Allow sending cookies with credentials
   })
 );
