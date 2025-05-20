@@ -25,6 +25,7 @@ app.use(
     credentials: true, // Allow sending cookies with credentials
   })
 );
+app.options("*", cors());
 
 app.use("/invest/api/v1", user);
 
