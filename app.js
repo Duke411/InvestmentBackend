@@ -1,33 +1,31 @@
-const express = require('express');
-const http = require('http')
+const express = require("express");
+const http = require("http");
 const app = express();
-const server = http.createServer(app)
-const user = require('./routes/userRoutes')
+const server = http.createServer(app);
+const user = require("./routes/userRoutes");
 const cors = require("cors");
-const cookieParser = require('cookie-parser');
+const cookieParser = require("cookie-parser");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser())
+app.use(cookieParser());
 
-app.get('/', (req, res)=>{
+app.get("/", (req, res) => {
   res.status(200).json({
     data: {
-      name: 'ike',
-      age: '23'
-    }
-  })
-})
-
+      name: "ike",
+      age: "23",
+    },
+  });
+});
 
 app.use(
-    cors({
-      origin: "http://localhost:5173", // Your React app's URL
-      credentials: true, // Allow sending cookies with credentials
-    })
-  );
+  cors({
+    origin: "https://tradeemma.netlify.app/", // Your React app's URL
+    credentials: true, // Allow sending cookies with credentials
+  })
+);
 
+app.use("/invest/api/v1", user);
 
-app.use('/invest/api/v1', user)
-
-module.exports = {app, server}
+module.exports = { app, server };
