@@ -17,7 +17,7 @@ router.post("/login", login);
 router.post("/logout", logout);
 
 // User management routes (admin-only)
-router.get("/users", protect, restrictTo("admin"), getAllUsers);
+router.get("/users", restrictTo("admin"), getAllUsers);
 router.patch("/:userId", protect, restrictTo("admin"), updateUserProfile);
 router.delete("/:userId", protect, restrictTo("admin"), deleteUser);
 router.post("/credit-referrer", protect, restrictTo("admin"), creditReferrer);
