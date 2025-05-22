@@ -41,7 +41,7 @@ app.use(
     credentials: true,
   })
 );
-app.options("*", cors());
+// app.options("*", cors());
 
 app.use("/invest/api/v1", user);
 
