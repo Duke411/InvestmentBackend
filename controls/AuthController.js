@@ -1,6 +1,6 @@
-const User = require('../models/userModel');
-const jwt = require('jsonwebtoken');
-const asyncHandler = require('express-async-handler');
+const User = require("../models/userModel");
+const jwt = require("jsonwebtoken");
+const asyncHandler = require("express-async-handler");
 
 // exports.signup = asyncHandler(async (req, res, next) => {
 //   try {
@@ -55,15 +55,16 @@ const asyncHandler = require('express-async-handler');
 
 exports.signup = asyncHandler(async (req, res, next) => {
   try {
-    const { fullName, email, password, confirmPassword, role, referralCode } = req.body;
+    const { fullName, email, password, confirmPassword, role, referralCode } =
+      req.body;
 
     // Validate referral code if provided
     if (referralCode) {
       const referrer = await User.findOne({ referralCode });
       if (!referrer) {
         return res.status(400).json({
-          status: 'fail',
-          message: 'Invalid referral code'
+          status: "fail",
+          message: "Invalid referral code",
         });
       }
     }
@@ -73,23 +74,19 @@ exports.signup = asyncHandler(async (req, res, next) => {
       email,
       password,
       confirmPassword,
-      role: role || 'user',
-      referredBy: referralCode || null
+      role: role || "user",
+      referredBy: referralCode || null,
     });
 
-    const token = jwt.sign(
-      { id: newUser._id },
-      process.env.TOKEN_PASSWORD,
-      {
-        expiresIn: process.env.JWT_EXPIRES || '30d'
-      }
-    );
+    const token = jwt.sign({ id: newUser._id }, process.env.TOKEN_PASSWORD, {
+      expiresIn: process.env.JWT_EXPIRES || "30d",
+    });
 
-    res.cookie('jwt', token, {
+    res.cookie("jwt", token, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None",
     });
 
     const userWithoutPassword = newUser.toObject();
@@ -97,23 +94,24 @@ exports.signup = asyncHandler(async (req, res, next) => {
     delete userWithoutPassword.confirmPassword;
 
     res.status(201).json({
-      status: 'success',
+      status: "success",
       token,
       data: {
-        user: userWithoutPassword
-      }
+        user: userWithoutPassword,
+      },
     });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({
-        status: 'fail',
-        message: 'Email or referral code already in use. Please use a different email or try again.'
+        status: "fail",
+        message:
+          "Email or referral code already in use. Please use a different email or try again.",
       });
     }
 
     res.status(400).json({
-      status: 'fail',
-      message: error.message
+      status: "fail",
+      message: error.message,
     });
   }
 });
@@ -121,49 +119,49 @@ exports.signup = asyncHandler(async (req, res, next) => {
 exports.login = asyncHandler(async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    
+
     if (!email || !password) {
       return res.status(400).json({
         status: "fail",
         message: "Please provide email and password",
       });
     }
-    
+
     const user = await User.findOne({ email }).select("+password");
-    
+
     if (!user) {
       return res.status(401).json({
         status: "fail",
         message: "Incorrect email or password",
       });
     }
-    
+
     const correct = await user.correctPassword(password, user.password);
-    
+
     if (!correct) {
       return res.status(401).json({
         status: "fail",
         message: "Incorrect email or password",
       });
     }
-    
+
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.TOKEN_PASSWORD,
       {
-        expiresIn: process.env.JWT_EXPIRES || '30d',
+        expiresIn: process.env.JWT_EXPIRES || "30d",
       }
     );
-    
+
     res.cookie("jwt", token, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
     });
-    
+
     user.password = undefined;
-    
+
     res.status(200).json({
       status: "success",
       token,
@@ -172,66 +170,79 @@ exports.login = asyncHandler(async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     res.status(500).json({
       status: "error",
-      message: error.message
+      message: error.message,
     });
   }
 });
 
 exports.logout = asyncHandler(async (req, res) => {
   try {
-    res.cookie('jwt', '', {
+    res.cookie("jwt", "", {
       httpOnly: true,
       expires: new Date(0),
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
     });
 
     res.status(200).json({
-      status: 'success',
-      message: 'Logged out successfully'
+      status: "success",
+      message: "Logged out successfully",
     });
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error("Logout error:", error);
     res.status(500).json({
-      status: 'error',
-      message: error.message
+      status: "error",
+      message: error.message,
     });
   }
 });
 
 exports.getAllUsers = asyncHandler(async (req, res) => {
   try {
-    console.log('Fetching all users...');
-    const users = await User.find().select('-password -confirmPassword');
-    console.log('Users fetched:', users.length);
+    console.log("Fetching all users...");
+    const users = await User.find().select("-password -confirmPassword");
+    console.log("Users fetched:", users.length);
 
     res.status(200).json({
-      status: 'success',
+      status: "success",
       results: users.length,
       data: {
-        users
-      }
+        users,
+      },
     });
   } catch (error) {
-    console.error('Get all users error:', error);
+    console.error("Get all users error:", error);
     res.status(500).json({
-      status: 'error',
-      message: error.message
+      status: "error",
+      message: error.message,
     });
   }
 });
 
 exports.updateUserProfile = asyncHandler(async (req, res) => {
   try {
-    const { fullName, email, accountBalance, totalInvestment, totalProfit, totalLoss } = req.body;
+    const {
+      fullName,
+      email,
+      accountBalance,
+      totalInvestment,
+      totalProfit,
+      totalLoss,
+    } = req.body;
 
-    if (req.body.password || req.body.confirmPassword || req.body.role || req.body.accountId) {
+    if (
+      req.body.password ||
+      req.body.confirmPassword ||
+      req.body.role ||
+      req.body.accountId
+    ) {
       return res.status(400).json({
-        status: 'fail',
-        message: 'Cannot update password, role, or accountId through this endpoint'
+        status: "fail",
+        message:
+          "Cannot update password, role, or accountId through this endpoint",
       });
     }
 
@@ -243,39 +254,39 @@ exports.updateUserProfile = asyncHandler(async (req, res) => {
         accountBalance,
         totalInvestment,
         totalProfit,
-        totalLoss
+        totalLoss,
       },
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
-    ).select('-password -confirmPassword');
+    ).select("-password -confirmPassword");
 
     if (!updatedUser) {
       return res.status(404).json({
-        status: 'fail',
-        message: 'User not found'
+        status: "fail",
+        message: "User not found",
       });
     }
 
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: {
-        user: updatedUser
-      }
+        user: updatedUser,
+      },
     });
   } catch (error) {
-    console.error('Update user profile error:', error);
+    console.error("Update user profile error:", error);
     if (error.code === 11000) {
       return res.status(400).json({
-        status: 'fail',
-        message: 'Email already in use. Please use a different email.'
+        status: "fail",
+        message: "Email already in use. Please use a different email.",
       });
     }
 
     res.status(400).json({
-      status: 'fail',
-      message: error.message
+      status: "fail",
+      message: error.message,
     });
   }
 });
@@ -286,25 +297,25 @@ exports.deleteUser = asyncHandler(async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: 'fail',
-        message: 'User not found'
+        status: "fail",
+        message: "User not found",
       });
     }
 
     res.status(204).json({
-      status: 'success',
-      data: null
+      status: "success",
+      data: null,
     });
   } catch (error) {
-    console.error('Delete user error:', error);
+    console.error("Delete user error:", error);
     res.status(500).json({
-      status: 'error',
-      message: error.message
+      status: "error",
+      message: error.message,
     });
   }
 });
 
-// ! New Endpoint 
+// ! New Endpoint
 
 exports.creditReferrer = asyncHandler(async (req, res) => {
   try {
@@ -314,16 +325,16 @@ exports.creditReferrer = asyncHandler(async (req, res) => {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({
-        status: 'fail',
-        message: 'User not found'
+        status: "fail",
+        message: "User not found",
       });
     }
 
     // Check if the user has a referredBy code
     if (!user.referredBy) {
       return res.status(400).json({
-        status: 'fail',
-        message: 'User was not referred'
+        status: "fail",
+        message: "User was not referred",
       });
     }
 
@@ -331,8 +342,8 @@ exports.creditReferrer = asyncHandler(async (req, res) => {
     const referrer = await User.findOne({ referralCode: user.referredBy });
     if (!referrer) {
       return res.status(400).json({
-        status: 'fail',
-        message: 'Referrer not found'
+        status: "fail",
+        message: "Referrer not found",
       });
     }
 
@@ -348,14 +359,14 @@ exports.creditReferrer = asyncHandler(async (req, res) => {
     await user.save();
 
     res.status(200).json({
-      status: 'success',
-      message: `Referrer credited with $${referralBonus.toFixed(2)}`
+      status: "success",
+      message: `Referrer credited with $${referralBonus.toFixed(2)}`,
     });
   } catch (error) {
-    console.error('Credit referrer error:', error);
+    console.error("Credit referrer error:", error);
     res.status(500).json({
-      status: 'error',
-      message: error.message
+      status: "error",
+      message: error.message,
     });
   }
 });
