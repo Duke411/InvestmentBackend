@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const {
+  forgotPassword,
+  resetPassword,
   signup,
   login,
   logout,
@@ -21,5 +23,9 @@ router.get("/users", protect, restrictTo("admin"), getAllUsers);
 router.patch("/:userId", protect, restrictTo("admin"), updateUserProfile);
 router.delete("/:userId", protect, restrictTo("admin"), deleteUser);
 router.post("/credit-referrer", protect, restrictTo("admin"), creditReferrer);
+
+// ! Forgot Password route
+router.post("/forgot-password", forgotPassword);
+router.patch("/reset-password/:token", resetPassword);
 
 module.exports = router;

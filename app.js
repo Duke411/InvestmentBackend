@@ -37,11 +37,11 @@ app.use(cookieParser());
 // Corrected CORS
 app.use(
   cors({
-    origin: "https://tradeemma.netlify.app",
+    origin: ["https://tradeemma.netlify.app", "http://localhost:5173"],
     credentials: true,
   })
 );
-// app.options("*", cors());
+app.options("*", cors());
 
 app.use("/invest/api/v1", user);
 

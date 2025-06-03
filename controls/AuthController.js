@@ -1,57 +1,9 @@
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
-
-// exports.signup = asyncHandler(async (req, res, next) => {
-//   try {
-//     const newUser = await User.create({
-//       fullName: req.body.fullName,
-//       email: req.body.email,
-//       password: req.body.password,
-//       confirmPassword: req.body.confirmPassword,
-//       role: req.body.role || 'user',
-//     });
-
-//     const token = jwt.sign(
-//       { id: newUser._id },
-//       process.env.TOKEN_PASSWORD,
-//       {
-//         expiresIn: process.env.JWT_EXPIRES || '30d'
-//       }
-//     );
-
-//     res.cookie('jwt', token, {
-//       httpOnly: true,
-//       maxAge: 30 * 24 * 60 * 60 * 1000,
-//       secure: process.env.NODE_ENV === 'production',
-//       sameSite: 'strict'
-//     });
-
-//     const userWithoutPassword = newUser.toObject();
-//     delete userWithoutPassword.password;
-//     delete userWithoutPassword.confirmPassword;
-
-//     res.status(201).json({
-//       status: 'success',
-//       token,
-//       data: {
-//         user: userWithoutPassword
-//       }
-//     });
-//   } catch (error) {
-//     if (error.code === 11000) {
-//       return res.status(400).json({
-//         status: 'fail',
-//         message: 'Email already in use. Please use a different email or login.'
-//       });
-//     }
-
-//     res.status(400).json({
-//       status: 'fail',
-//       message: error.message
-//     });
-//   }
-// });
+const crypto = require("crypto");
+const { generateResetToken } = require("../utils/generateResetToken");
+const sendEmail = require("../utils/sendEmail");
 
 exports.signup = asyncHandler(async (req, res, next) => {
   try {
@@ -370,3 +322,109 @@ exports.creditReferrer = asyncHandler(async (req, res) => {
     });
   }
 });
+
+// ! Forgot Password Endpoint
+exports.forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const { resetToken, hashedToken } = generateResetToken();
+
+  user.passwordResetToken = hashedToken;
+  user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 mins
+  await user.save({ validateBeforeSave: false });
+
+  const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+  const message = `Forgot your password? Reset it here: ${resetUrl}`;
+
+  await sendEmail({
+    email: user.email,
+    subject: "Your password reset token",
+    message,
+  });
+
+  res.status(200).json({ message: "Token sent to email" });
+});
+
+// !Reset Password Endpoint
+
+exports.resetPassword = asyncHandler(async (req, res) => {
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return res.status(400).json({ message: "Token is invalid or has expired" });
+  }
+
+  user.password = req.body.password;
+  user.confirmPassword = req.body.confirmPassword;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  res.status(200).json({ message: "Password reset successful" });
+});
+
+// ! Previous Code for reference purpose
+
+// exports.signup = asyncHandler(async (req, res, next) => {
+//   try {
+//     const newUser = await User.create({
+//       fullName: req.body.fullName,
+//       email: req.body.email,
+//       password: req.body.password,
+//       confirmPassword: req.body.confirmPassword,
+//       role: req.body.role || 'user',
+//     });
+
+//     const token = jwt.sign(
+//       { id: newUser._id },
+//       process.env.TOKEN_PASSWORD,
+//       {
+//         expiresIn: process.env.JWT_EXPIRES || '30d'
+//       }
+//     );
+
+//     res.cookie('jwt', token, {
+//       httpOnly: true,
+//       maxAge: 30 * 24 * 60 * 60 * 1000,
+//       secure: process.env.NODE_ENV === 'production',
+//       sameSite: 'strict'
+//     });
+
+//     const userWithoutPassword = newUser.toObject();
+//     delete userWithoutPassword.password;
+//     delete userWithoutPassword.confirmPassword;
+
+//     res.status(201).json({
+//       status: 'success',
+//       token,
+//       data: {
+//         user: userWithoutPassword
+//       }
+//     });
+//   } catch (error) {
+//     if (error.code === 11000) {
+//       return res.status(400).json({
+//         status: 'fail',
+//         message: 'Email already in use. Please use a different email or login.'
+//       });
+//     }
+
+//     res.status(400).json({
+//       status: 'fail',
+//       message: error.message
+//     });
+//   }
+// });
